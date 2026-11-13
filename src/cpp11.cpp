@@ -6,16 +6,32 @@
 #include <R_ext/Visibility.h>
 
 // interface_fcwt.cpp
-std::vector<double> fcwt_raw(std::vector<double> signal, int fs, double f0, double f1, int fn, double sigma, int nthreads, bool optplans, bool abs);
-extern "C" SEXP _fCWTr_fcwt_raw(SEXP signal, SEXP fs, SEXP f0, SEXP f1, SEXP fn, SEXP sigma, SEXP nthreads, SEXP optplans, SEXP abs) {
+cpp11::r_bool has_openmp();
+extern "C" SEXP _fCWTr_has_openmp() {
   BEGIN_CPP11
-    return cpp11::as_sexp(fcwt_raw(cpp11::as_cpp<cpp11::decay_t<std::vector<double>>>(signal), cpp11::as_cpp<cpp11::decay_t<int>>(fs), cpp11::as_cpp<cpp11::decay_t<double>>(f0), cpp11::as_cpp<cpp11::decay_t<double>>(f1), cpp11::as_cpp<cpp11::decay_t<int>>(fn), cpp11::as_cpp<cpp11::decay_t<double>>(sigma), cpp11::as_cpp<cpp11::decay_t<int>>(nthreads), cpp11::as_cpp<cpp11::decay_t<bool>>(optplans), cpp11::as_cpp<cpp11::decay_t<bool>>(abs)));
+    return cpp11::as_sexp(has_openmp());
+  END_CPP11
+}
+// interface_fcwt.cpp
+cpp11::r_bool has_avx();
+extern "C" SEXP _fCWTr_has_avx() {
+  BEGIN_CPP11
+    return cpp11::as_sexp(has_avx());
+  END_CPP11
+}
+// interface_fcwt.cpp
+cpp11::writable::doubles fcwt_raw(cpp11::doubles signal, double fs, double f0, double f1, int fn, double sigma, int window_size, int nthreads, bool scaletype);
+extern "C" SEXP _fCWTr_fcwt_raw(SEXP signal, SEXP fs, SEXP f0, SEXP f1, SEXP fn, SEXP sigma, SEXP window_size, SEXP nthreads, SEXP scaletype) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(fcwt_raw(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(signal), cpp11::as_cpp<cpp11::decay_t<double>>(fs), cpp11::as_cpp<cpp11::decay_t<double>>(f0), cpp11::as_cpp<cpp11::decay_t<double>>(f1), cpp11::as_cpp<cpp11::decay_t<int>>(fn), cpp11::as_cpp<cpp11::decay_t<double>>(sigma), cpp11::as_cpp<cpp11::decay_t<int>>(window_size), cpp11::as_cpp<cpp11::decay_t<int>>(nthreads), cpp11::as_cpp<cpp11::decay_t<bool>>(scaletype)));
   END_CPP11
 }
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
-    {"_fCWTr_fcwt_raw", (DL_FUNC) &_fCWTr_fcwt_raw, 9},
+    {"_fCWTr_fcwt_raw",   (DL_FUNC) &_fCWTr_fcwt_raw,   9},
+    {"_fCWTr_has_avx",    (DL_FUNC) &_fCWTr_has_avx,    0},
+    {"_fCWTr_has_openmp", (DL_FUNC) &_fCWTr_has_openmp, 0},
     {NULL, NULL, 0}
 };
 }

@@ -4,14 +4,37 @@
 \alias{autoplot.fcwtr_scalogram}
 \title{Create a ggplot object resembling a scalogram}
 \usage{
-autoplot.fcwtr_scalogram(object, n = 1000, ...)
+\method{autoplot}{fcwtr_scalogram}(
+  object,
+  n = 1000,
+  time_unit = NULL,
+  freq_unit = "Hz",
+  transf = identity,
+  ...
+)
 }
 \arguments{
+\item{object}{A "fcwtr_scalogram" object resulting from \code{\link[=fcwt]{fcwt()}}.}
+
 \item{n}{The plotting function reduces the time resolution by averaging
 to generate a reasonable graphics format. \code{n} is the number of time
 steps that are plotted. Defaults to \code{n = 1000}.}
 
-\item{...}{other arguments passed to specific methods}
+\item{time_unit}{A time unit that is used for the x-axis scale, e.g. \code{"s"} or \code{"ms"}.
+By default (\code{NULL}), a suitable unit (s, ms, us, or ns) is chosen depending
+on the length of the scalogram.
+See \code{units::valid_udunits()} and \code{units::valid_udunits_prefixes()} for valid
+expressions.}
+
+\item{freq_unit}{A frequency unit that is used for the y-axis scale.
+Defaults to "Hz" - "Hertz".
+See \code{units::valid_udunits()} and \code{units::valid_udunits_prefixes()} for valid
+expressions.}
+
+\item{transf}{A function, taking a vector and returning a vector, that is used to
+transform the scalogram values before plotting.}
+
+\item{...}{Additional arguments are ignored.}
 }
 \value{
 A ggplot object.
@@ -19,4 +42,20 @@ A ggplot object.
 \description{
 Create a ggplot object resembling a scalogram
 }
-\keyword{internal}
+\examples{
+\dontshow{if (requireNamespace("ggplot2", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+library(ggplot2)
+
+res <-
+  fcwt(
+    sin((1:4410) * 2 * pi * 440 / 44100),
+    x_sample_freq = u(44100, "Hz"),
+    freq_begin = u(50, "Hz"),
+    freq_end = u(1000, "Hz"),
+    n_freqs = 10,
+    sigma = 5
+  )
+
+autoplot(res, time_unit = "ms")
+\dontshow{\}) # examplesIf}
+}

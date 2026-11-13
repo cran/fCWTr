@@ -2,39 +2,44 @@
 % Please edit documentation in R/fcwtr_scalogram.R
 \name{as.data.frame.fcwtr_scalogram}
 \alias{as.data.frame.fcwtr_scalogram}
-\title{Coerce the scalogram matrix to a data frame}
+\title{Convert the scalogram matrix to a data frame}
 \usage{
 \method{as.data.frame}{fcwtr_scalogram}(x, ...)
 }
 \arguments{
-\item{x}{An object resulting from \code{\link[=fcwt]{fcwt()}}.}
+\item{x}{An "fcwtr_scalogram" object resulting from \code{\link[=fcwt]{fcwt()}}.}
 
-\item{...}{additional arguments to be passed to or from methods.}
+\item{...}{Additional arguments are ignored.}
 }
 \value{
 A \code{\link[=data.frame]{data.frame()}} object representing the scalogram data with four columns:
 \describe{
-\item{time_ind}{An integer index uniquely identifying time slices.}
-\item{time}{The time difference to the first time slice in physical units.
-The time unit is the inverse of the frequency unit chosen by the user
-for the \code{sample_freq} argument of \code{\link[=fcwt]{fcwt()}}.}
-\item{freq}{The frequency in the same units as the \code{sample_freq} argument
-of \code{\link[=fcwt]{fcwt()}}.}
+\item{time_index}{An integer index uniquely identifying time slices,
+starting at 0.}
+\item{time}{The time of the time slice in physical units, relative to the
+beginning of the input signal (time slices that were cut off,
+e.g. by subsetting, are taken into account).
+The time unit (s, ms, us, or ns) is chosen depending on the
+magnitude of the values, and can be converted with
+\code{units::set_units()}.}
+\item{freq}{The frequency, in the units chosen by the user for the
+\code{freq_begin} and \code{freq_end} arguments of \code{\link[=fcwt]{fcwt()}}.}
 \item{value}{The fCWT result for the particular time-frequency combination.}
 }
 }
 \description{
 Internally, the scalogram resulting from \code{\link[=fcwt]{fcwt()}} is represented by
-a numeric matrix. This method coerces this matrix into a reasonable
-data frame. Note that this conversion has a significant run time cost.
+a numeric \code{\link[=matrix]{matrix()}}. This method converts this matrix into a
+\code{\link[=data.frame]{data.frame()}} in long format, with one row per matrix entry.
+Note that this conversion has a significant run time cost.
 }
 \examples{
 fcwt(
   sin((1:5000) * 2 * pi * 440 / 44100),
-  sample_freq = 44100,
+  x_sample_freq = u(44100, "Hz"),
   n_freqs = 10
 ) |>
-as.data.frame() |>
-head()
+  as.data.frame() |>
+  head()
 
 }

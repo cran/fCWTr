@@ -4,16 +4,30 @@
 \alias{plot.fcwtr_scalogram}
 \title{Scalogram plotting}
 \usage{
-\method{plot}{fcwtr_scalogram}(x, n = 1000, ...)
+\method{plot}{fcwtr_scalogram}(x, n = 1000, time_unit = NULL, freq_unit = "Hz", transf = identity, ...)
 }
 \arguments{
-\item{x}{An object resulting from \code{\link[=fcwt]{fcwt()}}.}
+\item{x}{An "fcwtr_scalogram" object resulting from \code{\link[=fcwt]{fcwt()}}.}
 
 \item{n}{The plotting function reduces the time resolution by averaging
 to generate a reasonable graphics format. \code{n} is the number of time
 steps that are plotted. Defaults to \code{n = 1000}.}
 
-\item{...}{other arguments passed to specific methods}
+\item{time_unit}{A time unit that is used for the x-axis scale, e.g. \code{"s"} or \code{"ms"}.
+By default (\code{NULL}), a suitable unit (s, ms, us, or ns) is chosen depending
+on the length of the scalogram.
+See \code{units::valid_udunits()} and \code{units::valid_udunits_prefixes()} for valid
+expressions.}
+
+\item{freq_unit}{A frequency unit that is used for the y-axis scale.
+Defaults to "Hz" - "Hertz".
+See \code{units::valid_udunits()} and \code{units::valid_udunits_prefixes()} for valid
+expressions.}
+
+\item{transf}{A function, taking a vector and returning a vector, that is used to
+transform the scalogram values before plotting.}
+
+\item{...}{Additional arguments are ignored.}
 }
 \value{
 No return value, called for side effects.
@@ -23,19 +37,19 @@ Plots the scalogram resulting from \code{\link[=fcwt]{fcwt()}}.
 Requires \href{https://ggplot2.tidyverse.org/}{ggplot2}.
 }
 \examples{
-\dontshow{if (requireNamespace("ggplot2", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("ggplot2", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 ts_sin_440 <- sin((1:4410) * 2 * pi * 440 / 44100)
 
 res <-
   fcwt(
     ts_sin_440,
-    sample_freq = 44100,
-    freq_begin = 50,
-    freq_end = 1000,
+    x_sample_freq = u(44100, "Hz"),
+    freq_begin = u(50, "Hz"),
+    freq_end = u(1000, "Hz"),
     n_freqs = 10,
     sigma = 5
   )
 
-plot(res)
+plot(res, time_unit = "ms")
 \dontshow{\}) # examplesIf}
 }

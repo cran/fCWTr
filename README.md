@@ -1,11 +1,11 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# fCWTr
+# fCWTr <a href="https://lschneiderbauer.github.io/fCWTr/"><img src="man/figures/logo.svg" align="right" height="139" alt="fCWTr website" /></a>
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/lschneiderbauer/fcwtr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/lschneiderbauer/fCWTr/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/lschneiderbauer/fCWTr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/lschneiderbauer/fCWTr/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![CRAN
@@ -15,29 +15,33 @@ coverage](https://codecov.io/gh/lschneiderbauer/fCWTr/branch/master/graph/badge.
 
 <!-- badges: end -->
 
-The R package fCWTr is a simple wrapper invoking the [fCWT
+The R package fCWTr wraps the [fCWT
 library](https://github.com/fastlib/fCWT), a library implementing a
 [continuous wavelet
 transform](https://en.wikipedia.org/wiki/Continuous_wavelet_transform)
 with a Morlet wavelet, utilizing the power of
 [fftw](https://www.fftw.org/), a fast fourier transform implementation.
+It provides an R-like functional interface and implements common S3
+methods for convenience.
 
 See the original paper by Arts, L.P.A., van den Broek, E.L. The fast
 continuous wavelet transformation (fCWT) for real-time, high-quality,
 noise-resistant time–frequency analysis. Nat Comput Sci 2, 47–58 (2022).
 <https://doi.org/10.1038/s43588-021-00183-z>
 
-## Dependencies
+## System dependencies
 
 - R \>= 4.1
-- [fftw](https://www.fftw.org/) library (used by
-  [fCWT](https://github.com/fastlib/fCWT))
+- [fftw](https://www.fftw.org/) library with [single-precision
+  support](https://www.fftw.org/faq/section2.html#singleprec) enabled
+  (used by [fCWT](https://github.com/fastlib/fCWT))
 - Optional: a CPU/compiler supporting the
   [AVX](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions)
   instruction set
-- Optional: OpenMP
-  - On Windows, OpenMP support is disabled since rtools decided to
-    compile fftw without OpenMP support.
+- Optional: OpenMP (and fftw built with [OpenMP
+  support](https://www.fftw.org/doc/Usage-of-Multi_002dthreaded-FFTW.html))
+  - On Windows, OpenMP support is disabled since rtools’ fftw is
+    compiled without OpenMP support.
   - On Linux and MacOS the build scripts should automatically detect
     whether OpenMP support is available.
 
@@ -69,10 +73,24 @@ Alternatively, you can install the development version of fCWTr like so
 devtools::install_github("lschneiderbauer/fCWTr")
 ```
 
+Note that the installation process might fail if the package needs to be
+compiled from source and system requirements are not satisfied. The
+error message should give you hints, however, on what’s missing on your
+system.
+
+- Common confusion: fftw is installed, but without single precision
+  support (`libfftw3f`). Some distributions ship it as a separate
+  package:
+  - Debian/Ubuntu: `libfftw3-dev`
+  - Fedora/RHEL: `fftw-devel` and `fftw-libs-single`
+  - macOS: `brew install fftw` (or the CRAN macOS recipe `fftw-s`)
+  - If you build fftw yourself, configure it with `--enable-float`. See
+    [fftw.org](https://www.fftw.org/faq/section2.html#singleprec).
+
 ## Example
 
-This is a basic example that invokes the fCWT library to calculate the
-continuous wavelet transform and plot the result.
+This is a basic example where the continuous wavelet transform of a
+sample signal is calculated. The result is inspected and plotted.
 
 ``` r
 library(fCWTr)
@@ -84,33 +102,51 @@ signal <- ts_sin_superpos
 output <-
   fcwt(
     signal,
-    sample_freq = 44100,
-    freq_begin = 16,
-    freq_end = 2100,
+    x_sample_freq = u(44, "kHz"),
+    sigma = 5,
+    y_sample_freq = u(1, "kHz"),
+    freq_begin = u(16, "Hz"),
+    freq_end = u(2100, "Hz"),
     n_freqs = 200,
-    sigma = 5
+    freq_scale = "linear"
   )
 
-# The result is a numeric matrix
+# The result is a numeric matrix with time and frequency dimension
 dim(output)
-#> [1] 6000  200
+#> [1] 137 200
+
+# Some meta data is recorded too
+output
+#> _Scalogram_
+#> * (Time/Frequency) dimension:  ( 137 , 200 )
+#> * Sampling rate: 1 [kHz]
+#> * Frequency scale: 16 [Hz] - 2100 [Hz], linear
+#> * Time offset: 0 [s] 
+#> * Sigma: 5
+#>   o Time resolution at  16 [Hz] :  1.25 [s] 
+#>   o Time resolution at  2100 [Hz] :  9.52381 [ms] 
+#>   o Relative frequency resolution:  0.127324 
+#> * Time/frequency matrix summary
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+#>  0.0000  0.0001  0.0011  0.1267  0.0339  2.8194    6671
 ```
 
-The result can be easily coerced into a data frame:
+The result can also be converted into a data frame:
 
 ``` r
-head(as.data.frame(output), 10)
-#>    time_ind         time freq value
-#> 1         0 0.000000e+00 2100    NA
-#> 2         1 2.267574e-05 2100    NA
-#> 3         2 4.535147e-05 2100    NA
-#> 4         3 6.802721e-05 2100    NA
-#> 5         4 9.070295e-05 2100    NA
-#> 6         5 1.133787e-04 2100    NA
-#> 7         6 1.360544e-04 2100    NA
-#> 8         7 1.587302e-04 2100    NA
-#> 9         8 1.814059e-04 2100    NA
-#> 10        9 2.040816e-04 2100    NA
+as.data.frame(output) |>
+  head(10)
+#>    time_index   time      freq        value
+#> 1           0 0 [ms] 2100 [Hz]           NA
+#> 2           1 1 [ms] 2100 [Hz]           NA
+#> 3           2 2 [ms] 2100 [Hz]           NA
+#> 4           3 3 [ms] 2100 [Hz]           NA
+#> 5           4 4 [ms] 2100 [Hz] 3.326482e-03
+#> 6           5 5 [ms] 2100 [Hz] 1.388348e-03
+#> 7           6 6 [ms] 2100 [Hz] 4.916695e-04
+#> 8           7 7 [ms] 2100 [Hz] 1.552785e-04
+#> 9           8 8 [ms] 2100 [Hz] 5.435228e-05
+#> 10          9 9 [ms] 2100 [Hz] 3.173394e-05
 ```
 
 We can also directly plot the resulting scalogram:
@@ -119,29 +155,30 @@ We can also directly plot the resulting scalogram:
 plot(output)
 ```
 
-<img src="man/figures/README-example_plot-1.png" width="100%" />
+<img src="man/figures/README-example_plot-1.png" alt="" width="100%" />
 
-For long sequences, the required memory can exceed your local memory. In
-this case it can be useful to reduce the time resolution of the result
-and process the data in batches. This can be done with `fcwt_batch()`.
-In case the batch size is not explicitly provided, some heuristics are
-used to determine a batch size automatically:
+For long sequences, the required memory can exceed your available local
+memory. In this case it can be useful to reduce the time resolution of
+the result and process the data in batches. This can be done with
+`fcwt_batch()`. In case the batch size is not explicitly provided, some
+heuristics are used to determine a batch size automatically:
 
 ``` r
 batch_result <-
   fcwt_batch(
-    rep(ts_sin_sin, 10),
-    sample_freq = 44100,
-    freq_begin = 10,
-    freq_end = 12000,
+    rep(ts_sin_sin, 5),
+    x_sample_freq = u(44.1, "kHz"),
+    y_sample_freq = u(100, "Hz"),
+    freq_begin = u(100, "Hz"),
+    freq_end = u(12, "kHz"),
     n_freqs = 200,
-    sigma = 4,
-    time_resolution = 1 / 44100
+    freq_scale = "linear",
+    sigma = 4
   )
 
 plot(batch_result)
 ```
 
-<img src="man/figures/README-example_long_df-1.png" width="100%" />
+<img src="man/figures/README-example_long_df-1.png" alt="" width="100%" />
 
 <!-- regenerate with devtools::build_readme() -->
